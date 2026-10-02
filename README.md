@@ -16,6 +16,8 @@ No sign-up and no key needed. Demo mode is fully playable, and you can add your 
 
 <img src="docs/demo.gif" alt="A Prompt Battle: assertions resolve one by one, HP bars drain, VICTORY, share card" width="860">
 
+<sub>Recorded headless with Playwright on the live site.</sub>
+
 </div>
 
 ## Why
@@ -35,6 +37,8 @@ Prompt Colosseum turns prompt testing into a game, so you build the habit that a
 | **🗳️ Blind Vote** | Two anonymous outputs for the same input: pick the better one. Each vote feeds a personal Elo leaderboard of prompts and models and shows how often you agree with the test suite. |
 | **📣 Share card** | A Wordle-style result: an emoji row of case results, copyable text, a downloadable 1200×630 PNG, and one-click posting to X or LinkedIn. |
 | **✨ Juice** | Confetti, count-up scores, slam-in verdicts, screen shake on big hits. Sound is **off by default**. |
+
+<img src="docs/verdict.png" alt="Verdict screen with confetti, Elo change, badges and the share card" width="860">
 
 ```
 🏛️ Prompt Colosseum · Daily Duel #2
