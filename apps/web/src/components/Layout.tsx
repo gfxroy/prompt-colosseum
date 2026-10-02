@@ -55,7 +55,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                 🔥 {p.streak}
               </span>
             )}
-            <div className="ml-3 hidden w-28 xl:block" title={`Level ${lvl.level} · ${lvl.into}/${lvl.needed} XP`}>
+            <div className="ml-3 hidden w-28 2xl:block" title={`Level ${lvl.level} · ${lvl.into}/${lvl.needed} XP`}>
               <div className="flex justify-between text-[10px] font-bold text-gray-400 uppercase">
                 <span>Lv {lvl.level}</span>
                 <span>{p.xp} XP</span>
