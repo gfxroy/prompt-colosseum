@@ -29,3 +29,15 @@ jobs:
         with:
           name: junit-${{ matrix.suite }}
           path: junit-${{ matrix.suite }}.xml
+  action:
+    # Exercises the published composite action (installs the CLI from the v0.1.0 release).
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: colosseum
+        uses: ./
+        with:
+          suite: examples/suites/json-extraction.yaml
+          baseline: examples/baselines/json-extraction.json
+          args: --mock --prompt v1
+      - run: test "${{ steps.colosseum.outputs.exit-code }}" = "0" && test -s colosseum-junit.xml && test -s colosseum-results.json
