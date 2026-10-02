@@ -1,0 +1,67 @@
+name: "Prompt Colosseum - prompt regression tests"
+description: "Run a Prompt Colosseum eval suite in CI. Fails the job on prompt regressions vs a baseline; writes JUnit + a Markdown job summary."
+author: "Aaditya Roy"
+branding:
+  icon: "shield"
+  color: "orange"
+inputs:
+  suite:
+    description: "Path to the suite YAML/JSON"
+    required: true
+  baseline:
+    description: "Path to a previous results JSON (from `colosseum run --json`). Regressions vs this file fail the job."
+    required: false
+    default: ""
+  fail-on:
+    description: "regression | failure | none (default: regression when a baseline is given, else failure)"
+    required: false
+    default: ""
+  args:
+    description: "Extra CLI arguments, e.g. `--provider gpt --repeats 3 --mock`"
+    required: false
+    default: ""
+  junit:
+    description: "Where to write JUnit XML"
+    required: false
+    default: "colosseum-junit.xml"
+  json:
+    description: "Where to write the full results JSON (upload it and use it as the next baseline)"
+    required: false
+    default: "colosseum-results.json"
+  version:
+    description: "CLI version (GitHub release tag without the v)"
+    required: false
+    default: "0.1.0"
+outputs:
+  exit-code:
+    description: "0 = passed, 1 = failed (regression/failure), 2 = usage error"
+    value: ${{ steps.run.outputs.exit-code }}
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: "22"
+    - id: run
+      shell: bash
+      env:
+        INPUT_SUITE: ${{ inputs.suite }}
+        INPUT_BASELINE: ${{ inputs.baseline }}
+        INPUT_FAIL_ON: ${{ inputs.fail-on }}
+        INPUT_ARGS: ${{ inputs.args }}
+        INPUT_JUNIT: ${{ inputs.junit }}
+        INPUT_JSON: ${{ inputs.json }}
+        CLI_URL: https://github.com/gfxroy/prompt-colosseum/releases/download/v${{ inputs.version }}/prompt-colosseum-${{ inputs.version }}.tgz
+      run: |
+        set +e
+        npm install --no-save --no-audit --no-fund --prefix "$RUNNER_TEMP/colosseum" "$CLI_URL" >/dev/null
+        CLI="$RUNNER_TEMP/colosseum/node_modules/.bin/colosseum"
+        ARGS=(run "$INPUT_SUITE" --yes --junit "$INPUT_JUNIT" --json "$INPUT_JSON")
+        [ -n "$INPUT_BASELINE" ] && ARGS+=(--baseline "$INPUT_BASELINE")
+        [ -n "$INPUT_FAIL_ON" ] && ARGS+=(--fail-on "$INPUT_FAIL_ON")
+        # shellcheck disable=SC2206
+        EXTRA=($INPUT_ARGS)
+        "$CLI" "${ARGS[@]}" "${EXTRA[@]}"
+        code=$?
+        echo "exit-code=$code" >> "$GITHUB_OUTPUT"
+        exit $code

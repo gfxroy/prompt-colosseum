@@ -1,0 +1,26 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+        env:
+          VITE_BASE: /prompt-colosseum/
+      - name: CLI smoke test
+        run: |
+          node packages/cli/dist/colosseum.mjs --version
+          node packages/cli/dist/colosseum.mjs validate examples/suites/json-extraction.yaml
+          node packages/cli/dist/colosseum.mjs bosses

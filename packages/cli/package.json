@@ -1,0 +1,29 @@
+{
+  "name": "prompt-colosseum",
+  "version": "0.1.0",
+  "description": "colosseum - unit tests for prompts. Run YAML eval suites against OpenAI, Gemini or any OpenAI-compatible API; JUnit + Markdown output; fails CI on regressions.",
+  "type": "module",
+  "bin": {
+    "colosseum": "dist/colosseum.mjs"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "devDependencies": {
+    "@colosseum/core": "0.1.0",
+    "esbuild": "^0.25.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": ["llm", "evals", "prompt-engineering", "testing", "openai", "gemini", "ci"],
+  "repository": { "type": "git", "url": "https://github.com/gfxroy/prompt-colosseum" },
+  "homepage": "https://gfxroy.github.io/prompt-colosseum/",
+  "license": "MIT",
+  "author": "Aaditya Roy"
+}

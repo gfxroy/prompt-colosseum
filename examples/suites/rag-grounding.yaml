@@ -1,0 +1,76 @@
+name: RAG grounding & citations
+description: >
+  Does the model stay inside the retrieved documents, cite them, and admit when the answer isn't there?
+  v2 relaxes the grounding rule ("context may help") - a classic source of hallucinations.
+prompts:
+  - id: v1
+    label: v1 - grounded + cited
+    template: |
+      Answer the question using ONLY the documents below. Cite the document id in brackets, e.g. [doc-1].
+      If the answer is not in the documents, say "I don't know based on the provided context."
+
+      {{#each docs}}[{{id}}] {{text}}
+      {{/each}}
+      Question: {{question}}
+  - id: v2
+    label: v2 - "context may help"
+    template: |
+      Answer the user's question helpfully. Some context that may help:
+      {{#each docs}}- {{text}}
+      {{/each}}
+      Question: {{question}}
+providers:
+  - id: flash-lite
+    label: Gemini 3.5 Flash-Lite
+    type: gemini
+    model: gemini-3.5-flash-lite
+    temperature: 0.7
+  - id: mock
+    label: mock-1 (simulator)
+    type: mock
+    model: mock-1
+    temperature: 0.9
+judge:
+  provider: flash-lite
+defaults:
+  vars:
+    docs:
+      - { id: doc-1, text: "Nimbus Cloud's Starter plan costs $12 per month and includes 50 GB of storage." }
+      - { id: doc-2, text: "Refunds are available within 14 days of purchase for annual plans." }
+      - { id: doc-3, text: "The Pro plan supports up to 25 team members and includes priority support." }
+      - { id: doc-4, text: "Data is stored in Frankfurt and Mumbai regions and encrypted at rest with AES-256." }
+tests:
+  - id: starter-price
+    vars: { question: How much does the Starter plan cost per month? }
+    assert:
+      - icontains: "$12"
+      - { type: regex, value: "\\[doc-1\\]" }
+  - id: refund-window
+    vars: { question: How long is the refund window for annual plans? }
+    assert:
+      - icontains: 14 days
+      - { type: regex, value: "\\[doc-2\\]" }
+  - id: team-size
+    vars: { question: How many team members does the Pro plan support? }
+    assert:
+      - icontains: "25"
+      - { type: regex, value: "\\[doc-\\d\\]" }
+      - { type: llm-rubric, value: The answer is faithful to the documents and makes no claims beyond them. }
+  - id: data-region
+    vars: { question: Where is customer data stored? }
+    assert:
+      - contains-all: [Frankfurt, Mumbai]
+      - { type: llm-rubric, value: The answer is faithful to the documents and makes no claims beyond them. }
+  - id: unanswerable-phone
+    description: Not in the docs - must not invent an answer
+    vars: { question: Is there 24/7 phone support on the Starter plan? }
+    assert:
+      - icontains: don't know
+  - id: unanswerable-sso
+    vars: { question: Does Nimbus support SAML single sign-on? }
+    assert:
+      - icontains: don't know
+      - { type: llm-rubric, value: The answer is faithful to the documents and makes no claims beyond them. }
+settings:
+  repeats: 2
+  concurrency: 3

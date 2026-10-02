@@ -1,0 +1,31 @@
+# Dogfooding: run the example suites with the deterministic mock and gate on regressions vs committed baselines.
+name: Prompt CI (example)
+on:
+  push:
+    branches: [main]
+    paths: ["examples/**", "packages/**", ".github/workflows/prompt-ci.yml"]
+  pull_request:
+  workflow_dispatch:
+jobs:
+  evals:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [json-extraction, support-tone, rag-grounding, safety-refusals]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci && npm run build:cli
+      - name: Gate v1 on the committed baseline (must pass)
+        run: node packages/cli/dist/colosseum.mjs run examples/suites/${{ matrix.suite }}.yaml --mock --prompt v1 --baseline examples/baselines/${{ matrix.suite }}.json --junit junit-${{ matrix.suite }}.xml
+      - name: Show what the v2 rewrite would break (report only)
+        run: node packages/cli/dist/colosseum.mjs run examples/suites/${{ matrix.suite }}.yaml --mock --compare v1,v2 --repeats 1 --fail-on none
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: junit-${{ matrix.suite }}
+          path: junit-${{ matrix.suite }}.xml

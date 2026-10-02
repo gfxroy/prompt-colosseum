@@ -1,0 +1,37 @@
+{
+  "name": "prompt-colosseum-monorepo",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Unit tests for prompts - an LLM eval workbench and a prompt-battle arena. Browser-first, with a CLI and GitHub Action.",
+  "type": "module",
+  "workspaces": [
+    "packages/core",
+    "packages/cli",
+    "apps/web"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w apps/web",
+    "build": "npm run build -w packages/cli && npm run build -w apps/web",
+    "build:cli": "npm run build -w packages/cli",
+    "lint": "eslint .",
+    "typecheck": "tsc -p packages/core && tsc -p packages/cli && tsc -b apps/web",
+    "test": "vitest run",
+    "colosseum": "node packages/cli/dist/colosseum.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^24.0.0",
+    "eslint": "^10.11.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.7",
+    "globals": "^17.12.0",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.70.1",
+    "vitest": "^5.0.1"
+  },
+  "engines": {
+    "node": ">=20.19"
+  },
+  "license": "MIT",
+  "author": "Aaditya Roy"
+}
