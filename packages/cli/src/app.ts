@@ -11,15 +11,15 @@ import {
   MockProvider,
   parseSuite,
   RecordingProvider,
-  runBattle,
+  runLevel,
+  levelHint,
+  squares,
   runSuite,
   summarizeRun,
   toJUnit,
   toMarkdown,
   validateSuite,
   normalizeSuite,
-  emojiRow,
-  battleHints,
   columnKey,
   SuiteError,
   type Comparison,
@@ -51,8 +51,8 @@ ${c.bold("Usage")}
   colosseum validate <suite.yaml>           Check a suite for errors
   colosseum compare <base.json> <head.json> Diff two saved runs, flag regressions
   colosseum init [file]                     Write a starter suite
-  colosseum bosses                          List Prompt Battle bosses
-  colosseum battle <boss-id> -p prompt.txt  Fight a boss from your terminal
+  colosseum levels                          List the game's 10 levels
+  colosseum play <level> -p prompt.txt      Play a level from your terminal
 
 ${c.bold("Run options")}
   --provider <ids>     Only these provider ids (comma-separated)
@@ -324,26 +324,25 @@ tests:
       - { type: equals, value: negative, ignore_case: true }
 `;
 
-async function cmdBattle(args: string[], io: Io): Promise<number> {
+async function cmdPlay(args: string[], io: Io): Promise<number> {
   const { values, positionals } = parseArgs({ args, allowPositionals: true, options: { prompt: { type: "string", short: "p" }, provider: { type: "string" }, model: { type: "string" } } });
-  const boss = bossById(positionals[0] ?? "");
-  if (!boss) throw new UsageError(`unknown boss. Try: ${BOSSES.map((b) => b.id).join(", ")}`);
-  if (!values.prompt) throw new UsageError("battle needs --prompt <file> (your prompt text)");
-  const playerPrompt = readFileSync(resolve(io.cwd, values.prompt), "utf8");
+  const arg = positionals[0] ?? "";
+  const boss = bossById(arg) ?? BOSSES.find((b) => String(b.level) === arg);
+  if (!boss) throw new UsageError("unknown level. Try 1-10 (see: colosseum levels)");
+  if (!values.prompt) throw new UsageError("play needs --prompt <file> (your prompt text)");
+  const prompt = readFileSync(resolve(io.cwd, values.prompt), "utf8");
   const type = (values.provider ?? "mock") as ProviderConfig["type"];
   const cfg: ProviderConfig = { id: type, type, model: values.model ?? (type === "gemini" ? "gemini-3.5-flash-lite" : type === "openai" ? "gpt-4.1-mini" : "mock-1") };
   const keys: ProviderKeys = { openai: io.env.OPENAI_API_KEY, gemini: io.env.GEMINI_API_KEY ?? io.env.GOOGLE_API_KEY };
   if (type !== "mock" && !isLive(cfg, keys)) throw new UsageError(`missing API key for ${type}`);
   const provider = type === "mock" ? new MockProvider("mock") : createProvider(cfg, { keys, fetchImpl: io.fetchImpl });
-  io.out(`${boss.emoji}  ${c.bold(boss.name)} ${c.dim(boss.title)}: "${boss.taunt}"`);
-  const result = await runBattle({ spec: { boss, playerPrompt }, providerConfig: cfg, provider, live: type !== "mock", rpm: type === "mock" ? 0 : 10 });
-  for (const r of result.rounds) io.out(`  ${r.testId.padEnd(22)} you ${r.player.pass ? c.green("✓") : c.red("✗")}  boss ${r.champion.pass ? c.green("✓") : c.red("✗")}   HP ${Math.round(r.playerHp)} vs ${Math.round(r.bossHp)}`);
-  io.out(`\n  You  ${emojiRow(result)}  ${result.playerHp} HP`);
-  io.out(`  Boss ${emojiRow(result, "champion")}  ${result.bossHp} HP`);
-  const v = result.verdict;
-  io.out("\n  " + (v === "victory" ? c.green(c.bold(`👍 VICTORY - ${boss.defeatLine}`)) : v === "draw" ? c.yellow(c.bold("🤝 DRAW")) : c.red(c.bold(`👎 DEFEAT - ${boss.victoryLine}`))));
-  for (const h of battleHints(result)) io.out(c.dim(`  hint: ${h}`));
-  return v === "victory" ? 0 : 1;
+  io.out(`${c.bold(`Level ${boss.level}`)}  ${boss.goal}`);
+  const result = await runLevel({ boss, prompt, providerConfig: cfg, provider, live: type !== "mock", rpm: type === "mock" ? 0 : 10 });
+  for (const ch of result.checks) io.out(`  ${ch.pass ? "✓" : c.dim("✕")}  ${ch.pass ? ch.label : c.dim(ch.label)}`);
+  io.out(`\n  ${squares(result)}  ${result.won ? c.bold("You win") : `${result.passed}/${result.total} - try again`}`);
+  const hint = levelHint(result);
+  if (hint) io.out(c.dim(`  ${hint}`));
+  return result.won ? 0 : 1;
 }
 
 export async function main(argv: string[], io: Io): Promise<number> {
@@ -363,11 +362,11 @@ export async function main(argv: string[], io: Io): Promise<number> {
         io.out(`${c.green("✓")} wrote ${file} - try: colosseum run ${file} --mock`);
         return 0;
       }
-      case "bosses":
-        for (const b of BOSSES) io.out(`  ${String(b.level).padStart(2)}. ${b.emoji} ${c.bold(b.id.padEnd(14))} ${b.name}, ${b.title} ${c.dim(`(Elo ${b.rating})`)}`);
+      case "levels":
+        for (const b of BOSSES) io.out(`  ${String(b.level).padStart(2)}  ${b.goal}`);
         return 0;
-      case "battle":
-        return await cmdBattle(rest, io);
+      case "play":
+        return await cmdPlay(rest, io);
       case "--version":
       case "-v":
         io.out(VERSION);

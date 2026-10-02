@@ -93,15 +93,16 @@ describe("colosseum CLI", () => {
     expect(await main(["run", "s.yaml", "--quiet", "--fail-on", "none"], t.io)).toBe(0);
   });
 
-  it("lists bosses and wins a battle with the reference solution", async () => {
+  it("lists levels and wins a level with the reference solution", async () => {
     const t = makeIo();
-    expect(await main(["bosses"], t.io)).toBe(0);
-    expect(t.text()).toContain("sentimentus");
+    expect(await main(["levels"], t.io)).toBe(0);
+    expect(t.text()).toContain("positive, negative or neutral");
     writeFileSync(join(t.cwd, "p.txt"), bossById("sentimentus")!.solution);
-    expect(await main(["battle", "sentimentus", "-p", "p.txt"], t.io)).toBe(0);
-    expect(t.text()).toMatch(/VICTORY/);
+    expect(await main(["play", "1", "-p", "p.txt"], t.io)).toBe(0);
+    expect(t.text()).toMatch(/■■■■■ {2}You win/);
     writeFileSync(join(t.cwd, "weak.txt"), bossById("sentimentus")!.starter);
-    expect(await main(["battle", "sentimentus", "-p", "weak.txt"], t.io)).toBe(1);
+    expect(await main(["play", "sentimentus", "-p", "weak.txt"], t.io)).toBe(1);
+    expect(await main(["play", "99", "-p", "weak.txt"], t.io)).toBe(2);
   });
 
   it("calls the OpenAI-compatible endpoint with the key and never prints it", async () => {

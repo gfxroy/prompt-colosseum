@@ -95,7 +95,7 @@ GEMINI_API_KEY=... colosseum run suite.yaml --provider gemini --repeats 3 --rpm 
 colosseum run suite.yaml --compare v1,v2      # A/B two prompt versions, flag regressions
 colosseum run suite.yaml --baseline main.json # fail (exit 1) on regressions vs a saved run
 colosseum compare base.json head.json
-colosseum battle sentimentus -p my-prompt.txt # fight a boss from the terminal
+
 ```
 
 - Keys are read from the environment: `OPENAI_API_KEY`, `GEMINI_API_KEY`/`GOOGLE_API_KEY`, `COLOSSEUM_API_KEY`, or per provider via `apiKeyEnv:`. Keys are never printed.

@@ -23,4 +23,4 @@ jobs:
         run: |
           node packages/cli/dist/colosseum.mjs --version
           node packages/cli/dist/colosseum.mjs validate examples/suites/json-extraction.yaml
-          node packages/cli/dist/colosseum.mjs bosses
+          node packages/cli/dist/colosseum.mjs levels
